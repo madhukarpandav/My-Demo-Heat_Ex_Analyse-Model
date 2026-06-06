@@ -199,16 +199,23 @@ with col_right:
         with st.spinner("Processing neural simulation..."):
             
             # Fix: Wrap the input in double brackets to make it a 2D array
-            fluid_encoded = float(np.ravel(encoder.transform([[Types_of_fluid]])))
-            
-            input_data = np.array([[ 
-                fluid_encoded, mh, mc, Th1, Tc1, c, h,
-                Volume_Concentration, Size_of_Particle, 
-                Ultrasonication_time, Speed_of_Magnetic_Stirrer
-            ]], dtype=float)
-            
-            input_scaled = scaler.transform(input_data)
-            outputs = ["Th2", "Tc2", "LMTD", "e", "U0", "V", "Rec", "Prc", "NTU", "Dec", "Nuc", "hc", "R"]
+            # --- FIXED DATA PROCESSING LOGIC ---
+
+# 1. Transform the categorical fluid type into an array of numbers
+fluid_encoded = encoder.transform([[Types_of_fluid]])
+
+# If your encoder outputs a sparse matrix, convert it to a dense array
+if hasattr(fluid_encoded, "toarray"):
+    fluid_encoded = fluid_encoded.toarray()
+
+# 2. Collect your numeric inputs into a 2D array (Make sure these match your actual variables!)
+numeric_inputs = np.array([[Th1, Tc1, m_dot_hot, m_dot_cold]])
+
+# 3. Combine numeric features and your encoded fluid array horizontally side-by-side
+input_features = np.hstack([numeric_inputs, fluid_encoded])
+
+# 4. Scale your combined features using your loaded scaler
+input_scaled = scaler.transform(input_features)
 
             if selected_model_name == "Compare All Models":
                 st.markdown("### 📊 Model Comparison Across All Parameters")
