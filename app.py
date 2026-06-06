@@ -105,21 +105,21 @@ st.markdown("""
 # =========================
 @st.cache_resource
 def load_assets():
-    if not os.path.exists("model/scaler.pkl"):
+    if not os.path.exists("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/scaler.pkl"):
         return None, None, None, None
         
-    scaler = pickle.load(open("model/scaler.pkl", "rb"))
-    encoder = pickle.load(open("model/encoder.pkl", "rb"))
+    scaler = pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/scaler.pkl", "rb"))
+    encoder = pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/encoder.pkl", "rb"))
     
     scores = {}
-    if os.path.exists("model/scores.pkl"):
-        scores = pickle.load(open("model/scores.pkl", "rb"))
+    if os.path.exists("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/scores.pkl"):
+        scores = pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/scores.pkl", "rb"))
     
     models = {
-        "Random Forest": pickle.load(open("model/model_RandomForest.pkl", "rb")),
-        "Gradient Boosting": pickle.load(open("model/model_GradientBoosting.pkl", "rb")),
-        "Linear Regression": pickle.load(open("model/model_LinearRegression.pkl", "rb")),
-        "ANN": pickle.load(open("model/model_ANN.pkl", "rb"))
+        "Random Forest": pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/model_RandomForest.pkl", "rb")),
+        "Gradient Boosting": pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/model_GradientBoosting.pkl", "rb")),
+        "Linear Regression": pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/model_LinearRegression.pkl", "rb")),
+        "ANN": pickle.load(open("/workspaces/My-Demo-Heat_Ex_Analyse-Model/model/model_ANN.pkl", "rb"))
     }
     return scaler, encoder, models, scores
 
