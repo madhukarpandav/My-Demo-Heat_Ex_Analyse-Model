@@ -198,7 +198,8 @@ with col_right:
     if submit:
         with st.spinner("Processing neural simulation..."):
             
-            fluid_encoded = float(np.ravel(encoder.transform([Types_of_fluid])))
+            # Fix: Wrap the input in double brackets to make it a 2D array
+            fluid_encoded = float(np.ravel(encoder.transform([[Types_of_fluid]])))
             
             input_data = np.array([[ 
                 fluid_encoded, mh, mc, Th1, Tc1, c, h,
