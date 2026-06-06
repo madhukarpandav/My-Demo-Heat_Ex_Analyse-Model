@@ -14,6 +14,9 @@ try:
 except ImportError:
     go = None
 
+# Custom placeholder list for outputs if it isn't defined elsewhere in your dependencies
+outputs = ["Th2", "Tc2"]
+
 # ==========================================
 # CUSTOM CONSTRAINED REGRESSOR (REQUIRED FOR UNPICKLING)
 # ==========================================
@@ -196,20 +199,17 @@ with col_right:
     submit = st.button("▶ INITIALIZE PREDICTION", type="primary", use_container_width=True)
     
     if submit:
-       with st.spinner("Processing neural simulation..."):
+        with st.spinner("Processing neural simulation..."):
             
-            # Fix: Wrap the input in double brackets to make it a 2D array
-            # --- FIXED DATA PROCESSING LOGIC ---
-
-            # 1. Transform the categorical fluid type into an array of numbers
+            # 1. Transform the categorical fluid type into a stable feature array
             fluid_encoded = encoder.transform([[Types_of_fluid]])
 
             # If your encoder outputs a sparse matrix, convert it to a dense array
             if hasattr(fluid_encoded, "toarray"):
                 fluid_encoded = fluid_encoded.toarray()
 
-            # 2. Collect your numeric inputs into a 2D array
-            numeric_inputs = np.array([[Th1, Tc1, m_dot_hot, m_dot_cold]])
+            # 2. Collect your numeric inputs into a 2D array matching the train dimensions
+            numeric_inputs = np.array([[mh, mc, Th1, Tc1, c, h, Volume_Concentration, Size_of_Particle, Ultrasonication_time, Speed_of_Magnetic_Stirrer]])
 
             # 3. Combine numeric features and your encoded fluid array horizontally side-by-side
             input_features = np.hstack([numeric_inputs, fluid_encoded])
@@ -222,16 +222,13 @@ with col_right:
                 
                 all_results = {}
                 for m_name, mod in models.items():
-                    # Force flatten the prediction array
                     pred = np.ravel(mod.predict(input_scaled))
                     
-                    # Pad with 0.0 if the model predicts fewer than 13 parameters
                     if len(pred) < len(outputs):
                         pred = np.pad(pred, (0, len(outputs) - len(pred)), 'constant')
                         
                     res_dict = dict(zip(outputs, pred))
                     
-                    # --- MINIMAL FIX: Force physical bounds on the final text numbers ---
                     res_dict["Th2"] = min(res_dict["Th2"], Th1 - 0.001)
                     res_dict["Tc2"] = max(Tc1 + 4.0, min(res_dict["Tc2"], Tc1 + 15.0))
                     
@@ -285,14 +282,12 @@ with col_right:
                 Th2 = result.get("Th2", 0.0)
                 Tc2 = result.get("Tc2", 0.0)
                 
-                # --- MINIMAL FIX: Force physical bounds on the final text numbers ---
                 Tc2 = max(Tc1 + 4.0, min(Tc2, Tc1 + 15.0))
                 Th2 = min(Th2, Th1 - 0.001)
     
                 result["Tc2"] = Tc2
                 result["Th2"] = Th2
                 
-
                 Qh = mh * c * (Th1 - Th2)
                 Qc = mc * h * (Tc2 - Tc1)
                 Ch, Cc = mh * c, mc * h
@@ -362,7 +357,7 @@ with col_right:
                 st.info("💡 Select a specific neural model from the sidebar to view its individual performance metrics.")
             else:
                 with st.container(border=True):
-                    st.markdown(f"### 📊 Engine Details: {selected_model_name}")
+                    st.markdown(f"### 212 Engine Details: {selected_model_name}")
                     
                     model_data = scores.get(selected_model_name, "N/A")
                     
@@ -380,11 +375,10 @@ with col_right:
                         mae_str = "N/A" 
                         rmse_str = "N/A" 
 
-                    # -------- THE FIX IS SECURED HERE --------
+                    # -------- FIXED COLUMN INDEX LAYOUT SYSTEM SECURED HERE --------
                     score_cols = st.columns(3)
                     
-                    # --- FIXED CODES ---
-                    # Box 1 goes into the first column
+                    # Box 1 goes into column index
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #00E5FF; padding: 15px; border-radius: 6px; text-align: center; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
@@ -393,7 +387,7 @@ with col_right:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                    # Box 2 goes into the second column
+                    # Box 2 goes into column index
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
@@ -402,7 +396,7 @@ with col_right:
                         </div>
                         """, unsafe_allow_html=True)
 
-                    # Box 3 goes into the third column
+                    # Box 3 goes into column index
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
