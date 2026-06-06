@@ -201,20 +201,20 @@ with col_right:
     if submit:
         with st.spinner("Processing neural simulation..."):
             
-            # 1. Transform the categorical fluid type into a stable feature array
+            # 1. Transform categorical fluid type into a stable feature array
             fluid_encoded = encoder.transform([[Types_of_fluid]])
 
-            # If your encoder outputs a sparse matrix, convert it to a dense array
             if hasattr(fluid_encoded, "toarray"):
                 fluid_encoded = fluid_encoded.toarray()
 
-            # 2. Collect your numeric inputs into a 2D array matching the train dimensions
-            numeric_inputs = np.array([[mh, mc, Th1, Tc1, c, h, Volume_Concentration, Size_of_Particle, Ultrasonication_time, Speed_of_Magnetic_Stirrer]])
+            # 2. Flatten inputs into clear 1D vectors to prevent dimensional mismatch errors
+            numeric_flat = np.array([mh, mc, Th1, Tc1, c, h, Volume_Concentration, Size_of_Particle, Ultrasonication_time, Speed_of_Magnetic_Stirrer], dtype=float)
+            fluid_flat = np.ravel(fluid_encoded)
 
-            # 3. Combine numeric features and your encoded fluid array horizontally side-by-side
-            input_features = np.hstack([numeric_inputs, fluid_encoded])
+            # 3. Concatenate horizontally and shape as 2D array row vector for the scaler
+            input_features = np.concatenate([numeric_flat, fluid_flat]).reshape(1, -1)
 
-            # 4. Scale your combined features using your loaded scaler
+            # 4. Scale inputs safely
             input_scaled = scaler.transform(input_features)
 
             if selected_model_name == "Compare All Models":
