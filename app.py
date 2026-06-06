@@ -14,8 +14,7 @@ try:
 except ImportError:
     go = None
 
-# Custom placeholder list for outputs if it isn't defined elsewhere in your dependencies
-# Update this list to include all 13 output parameters from your dataset
+# --- FIXED: EXPANDED TO ALL 13 OUTPUT PARAMETERS ---
 outputs = [
     "Th2", "Tc2", "Qh", "Qc", "Qavg", 
     "LMTD", "U", "A", "Effectiveness", 
@@ -206,7 +205,7 @@ with col_right:
     if submit:
         with st.spinner("Processing neural simulation..."):
             
-            # 1. Transform categorical fluid type into a stable feature array
+            # 1. Transform categorical fluid type into stable feature array
             fluid_encoded = encoder.transform([[Types_of_fluid]])
 
             if hasattr(fluid_encoded, "toarray"):
@@ -242,27 +241,26 @@ with col_right:
                 tab_graph, tab_table = st.tabs(["📊 Graphical View", "📋 Tabular View"])
                 
                 with tab_graph:
-                    cols = st.columns(3)
+                    # Layout grid generation for Plotly figures
                     for i, param in enumerate(outputs):
-                        with cols[i % 3]:
-                            param_vals = [all_results[m][param] for m in models.keys()]
-                            
-                            fig = go.Figure(data=[go.Bar(
-                                x=list(models.keys()), 
-                                y=param_vals,
-                                marker_color=['#00E5FF', '#1E3A5F', '#FF007F', '#00FF7F']
-                            )])
-                            
-                            fig.update_layout(
-                                title=dict(text=f"Parameter: {param}", font=dict(color="#00E5FF", size=14)),
-                                margin=dict(l=20, r=20, t=40, b=20),
-                                height=280,
-                                paper_bgcolor='rgba(0,0,0,0)',
-                                plot_bgcolor='rgba(0,0,0,0)',
-                                xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color="white", size=10)),
-                                yaxis=dict(showgrid=True, gridcolor='#1E3A5F', tickfont=dict(color="white"))
-                            )
-                            st.plotly_chart(fig, use_container_width=True)
+                        param_vals = [all_results[m][param] for m in models.keys()]
+                        
+                        fig = go.Figure(data=[go.Bar(
+                            x=list(models.keys()), 
+                            y=param_vals,
+                            marker_color=['#00E5FF', '#1E3A5F', '#FF007F', '#00FF7F']
+                        )])
+                        
+                        fig.update_layout(
+                            title=dict(text=f"Parameter: {param}", font=dict(color="#00E5FF", size=14)),
+                            margin=dict(l=20, r=20, t=40, b=20),
+                            height=240,
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            xaxis=dict(showgrid=False, tickfont=dict(color="white", size=10)),
+                            yaxis=dict(showgrid=True, gridcolor='#1E3A5F', tickfont=dict(color="white"))
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
 
                 with tab_table:
                     df = pd.DataFrame(all_results)
@@ -293,21 +291,12 @@ with col_right:
                 result["Tc2"] = Tc2
                 result["Th2"] = Th2
                 
-            with c_deriv:
-                 with st.container(border=True):
-                    st.markdown("### 🧮 Derived Stats")
-                    # Pulling directly from the model's comprehensive output array:
-                    st.markdown(f"**Qh (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qh', 0.0):.4f}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**Qc (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qc', 0.0):.4f}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**Overall U** <span style='float:right; color:#00E5FF;'>{result.get('U', 0.0):.4f}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**Effectiveness** <span style='float:right; color:#00E5FF;'>{result.get('Effectiveness', 0.0):.4f}</span>", unsafe_allow_html=True)
-
-            with st.container(border=True):
+                with st.container(border=True):
                     st.markdown(f"### 📈 Neural Predictions ({selected_model_name})")
                     
-                    res_cols = st.columns(4)
+                    res_cols = st.columns(3)
                     for i, (key, value) in enumerate(result.items()):
-                        with res_cols[i % 4]:
+                        with res_cols[i % 3]:
                             st.markdown(f"""
                             <div data-testid="metric-container">
                                 <div style="color: #8B9BB4; font-size: 14px; margin-bottom: 5px;">{key}</div>
@@ -319,12 +308,12 @@ with col_right:
                 
                 with c_deriv:
                     with st.container(border=True):
-                        st.markdown("### 🧮 Derived Stats")
-                        st.markdown(f"**Qh (kW)** <span style='float:right; color:#00E5FF;'>{Qh:.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Qc (kW)** <span style='float:right; color:#00E5FF;'>{Qc:.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Cmin** <span style='float:right; color:#00E5FF;'>{Cmin:.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Cmax** <span style='float:right; color:#00E5FF;'>{Cmax:.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Cr Ratio** <span style='float:right; color:#00E5FF;'>{Cr:.4f}</span>", unsafe_allow_html=True)
+                        st.markdown("### 🧮 Summary Stats")
+                        st.markdown(f"**Th2 Predicted (°C)** <span style='float:right; color:#00E5FF;'>{result.get('Th2', 0.0):.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Tc2 Predicted (°C)** <span style='float:right; color:#00E5FF;'>{result.get('Tc2', 0.0):.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Qh Predicted (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qh', 0.0):.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**U Predicted** <span style='float:right; color:#00E5FF;'>{result.get('U', 0.0):.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Effectiveness** <span style='float:right; color:#00E5FF;'>{result.get('Effectiveness', 0.0):.4f}</span>", unsafe_allow_html=True)
                         
                 with c_map:
                     with st.container(border=True):
@@ -365,7 +354,7 @@ with col_right:
                 st.info("💡 Select a specific neural model from the sidebar to view its individual performance metrics.")
             else:
                 with st.container(border=True):
-                    st.markdown(f"### 212 Engine Details: {selected_model_name}")
+                    st.markdown(f"### Engine Validation Metrics: {selected_model_name}")
                     
                     model_data = scores.get(selected_model_name, "N/A")
                     
@@ -383,10 +372,8 @@ with col_right:
                         mae_str = "N/A" 
                         rmse_str = "N/A" 
 
-                    # -------- FIXED COLUMN INDEX LAYOUT SYSTEM SECURED HERE --------
                     score_cols = st.columns(3)
                     
-                    # Box 1 goes into column index
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #00E5FF; padding: 15px; border-radius: 6px; text-align: center; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
@@ -395,7 +382,6 @@ with col_right:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                    # Box 2 goes into column index
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
@@ -404,7 +390,6 @@ with col_right:
                         </div>
                         """, unsafe_allow_html=True)
 
-                    # Box 3 goes into column index
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
