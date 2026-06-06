@@ -293,14 +293,14 @@ with col_right:
                 result["Tc2"] = Tc2
                 result["Th2"] = Th2
                 
-               with c_deriv:
-    with st.container(border=True):
-        st.markdown("### 🧮 Derived Stats")
-        # Pulling directly from the model's comprehensive output array:
-        st.markdown(f"**Qh (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qh', 0.0):.4f}</span>", unsafe_allow_html=True)
-        st.markdown(f"**Qc (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qc', 0.0):.4f}</span>", unsafe_allow_html=True)
-        st.markdown(f"**Overall U** <span style='float:right; color:#00E5FF;'>{result.get('U', 0.0):.4f}</span>", unsafe_allow_html=True)
-        st.markdown(f"**Effectiveness** <span style='float:right; color:#00E5FF;'>{result.get('Effectiveness', 0.0):.4f}</span>", unsafe_allow_html=True)
+            with c_deriv:
+                 with st.container(border=True):
+                    st.markdown("### 🧮 Derived Stats")
+                    # Pulling directly from the model's comprehensive output array:
+                    st.markdown(f"**Qh (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qh', 0.0):.4f}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**Qc (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qc', 0.0):.4f}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**Overall U** <span style='float:right; color:#00E5FF;'>{result.get('U', 0.0):.4f}</span>", unsafe_allow_html=True)
+                    st.markdown(f"**Effectiveness** <span style='float:right; color:#00E5FF;'>{result.get('Effectiveness', 0.0):.4f}</span>", unsafe_allow_html=True)
 
                 with st.container(border=True):
                     st.markdown(f"### 📈 Neural Predictions ({selected_model_name})")
