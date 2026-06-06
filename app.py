@@ -372,32 +372,4 @@ with col_right:
                         mae_str = "N/A" 
                         rmse_str = "N/A" 
 
-                    # -------- FIXED COLUMN INDEX LAYOUT SYSTEM SECURED HERE --------
-                    score_cols = st.columns(3)
                     
-                    # Box 1 goes into column index
-                    with score_cols:
-                        st.markdown(f"""
-                        <div style="background-color: #151C2C; border: 1px solid #00E5FF; padding: 15px; border-radius: 6px; text-align: center; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
-                            <div style="color: #8C9BAB; font-size: 14px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">R² Score</div>
-                            <div style="color: #00FF7F; font-size: 26px; font-weight: bold;">{r2_str}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                    # Box 2 goes into column index
-                    with score_cols:
-                        st.markdown(f"""
-                        <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
-                            <div style="color: #8C9BAB; font-size: 14px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Mean Absolute Error (MAE)</div>
-                            <div style="color: #FFFFFF; font-size: 26px; font-weight: bold;">{mae_str}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                    # Box 3 goes into column index
-                    with score_cols:
-                        st.markdown(f"""
-                        <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
-                            <div style="color: #8C9BAB; font-size: 14px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Root Mean Sq. Error (RMSE)</div>
-                            <div style="color: #FFFFFF; font-size: 26px; font-weight: bold;">{rmse_str}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
