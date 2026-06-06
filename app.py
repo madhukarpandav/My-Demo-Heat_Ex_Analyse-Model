@@ -15,7 +15,12 @@ except ImportError:
     go = None
 
 # Custom placeholder list for outputs if it isn't defined elsewhere in your dependencies
-outputs = ["Th2", "Tc2"]
+# Update this list to include all 13 output parameters from your dataset
+outputs = [
+    "Th2", "Tc2", "Qh", "Qc", "Qavg", 
+    "LMTD", "U", "A", "Effectiveness", 
+    "Nu_h", "Nu_c", "f_h", "f_c"
+]
 
 # ==========================================
 # CUSTOM CONSTRAINED REGRESSOR (REQUIRED FOR UNPICKLING)
@@ -288,11 +293,14 @@ with col_right:
                 result["Tc2"] = Tc2
                 result["Th2"] = Th2
                 
-                Qh = mh * c * (Th1 - Th2)
-                Qc = mc * h * (Tc2 - Tc1)
-                Ch, Cc = mh * c, mc * h
-                Cmin, Cmax = min(Ch, Cc), max(Ch, Cc)
-                Cr = Cmin / Cmax if Cmax != 0 else 0
+               with c_deriv:
+    with st.container(border=True):
+        st.markdown("### 🧮 Derived Stats")
+        # Pulling directly from the model's comprehensive output array:
+        st.markdown(f"**Qh (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qh', 0.0):.4f}</span>", unsafe_allow_html=True)
+        st.markdown(f"**Qc (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qc', 0.0):.4f}</span>", unsafe_allow_html=True)
+        st.markdown(f"**Overall U** <span style='float:right; color:#00E5FF;'>{result.get('U', 0.0):.4f}</span>", unsafe_allow_html=True)
+        st.markdown(f"**Effectiveness** <span style='float:right; color:#00E5FF;'>{result.get('Effectiveness', 0.0):.4f}</span>", unsafe_allow_html=True)
 
                 with st.container(border=True):
                     st.markdown(f"### 📈 Neural Predictions ({selected_model_name})")
