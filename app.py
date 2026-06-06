@@ -376,6 +376,8 @@ with col_right:
                     # -------- THE FIX IS SECURED HERE --------
                     score_cols = st.columns(3)
                     
+                    # --- FIXED CODES ---
+                    # Box 1 goes into the first column
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #00E5FF; padding: 15px; border-radius: 6px; text-align: center; box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);">
@@ -384,6 +386,7 @@ with col_right:
                         </div>
                         """, unsafe_allow_html=True)
                         
+                    # Box 2 goes into the second column
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
@@ -392,6 +395,7 @@ with col_right:
                         </div>
                         """, unsafe_allow_html=True)
 
+                    # Box 3 goes into the third column
                     with score_cols:
                         st.markdown(f"""
                         <div style="background-color: #151C2C; border: 1px solid #2A354D; padding: 15px; border-radius: 6px; text-align: center;">
