@@ -14,13 +14,6 @@ try:
 except ImportError:
     go = None
 
-# --- FIXED: EXPANDED TO ALL 13 OUTPUT PARAMETERS ---
-outputs = [
-    "Th2", "Tc2", "Qh", "Qc", "Qavg", 
-    "LMTD", "U", "A", "Effectiveness", 
-    "Nu_h", "Nu_c", "f_h", "f_c"
-]
-
 # ==========================================
 # CUSTOM CONSTRAINED REGRESSOR (REQUIRED FOR UNPICKLING)
 # ==========================================
@@ -63,7 +56,7 @@ class ConstrainedRegressor(BaseEstimator, RegressorMixin):
 # =========================
 # Page Config & Futuristic CSS
 # =========================
-st.set_page_config(page_title="Lumina Thermal", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="ADTPAN", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
@@ -140,17 +133,15 @@ if scaler is None:
 # Sidebar - Model Selection
 # =========================
 with st.sidebar:
-    st.markdown("### ⚡ AI Core\n<span style='color:#00E5FF; font-size:0.8rem; text-transform:uppercase;'>Neural Engine</span>", unsafe_allow_html=True)
+    st.markdown("### ADTPAN\n<span style='color:#00E5FF; font-size:0.8rem; text-transform:uppercase;'>Neural Engine</span>", unsafe_allow_html=True)
     st.write("")
     
-    model_options = list(models.keys()) + ["Compare All Models"]
+    model_options = list(models.keys()) + ["Comparison of All Models"]
     selected_model_name = st.radio("Select Algorithm", model_options, index=1, label_visibility="collapsed")
     
     st.write("")
     st.write("")
     st.markdown("<hr style='border-color: #2A354D; margin-bottom: 10px;'>", unsafe_allow_html=True)
-    st.caption("📄 System Docs")
-    st.caption("🎧 Network Support")
 
 # =========================
 # Main Layout
@@ -205,34 +196,32 @@ with col_right:
     if submit:
         with st.spinner("Processing neural simulation..."):
             
-            # 1. Transform categorical fluid type into stable feature array
-            fluid_encoded = encoder.transform([[Types_of_fluid]])
+            fluid_encoded = float(encoder.transform([Types_of_fluid])[0])
+            
+            input_data = np.array([[ 
+                fluid_encoded, mh, mc, Th1, Tc1, c, h,
+                Volume_Concentration, Size_of_Particle, 
+                Ultrasonication_time, Speed_of_Magnetic_Stirrer
+            ]], dtype=float)
+            
+            input_scaled = scaler.transform(input_data)
+            outputs = ["Th2", "Tc2", "LMTD", "e", "U0", "V", "Rec", "Prc", "NTU", "Dec", "Nuc", "hc", "R"]
 
-            if hasattr(fluid_encoded, "toarray"):
-                fluid_encoded = fluid_encoded.toarray()
-
-            # 2. Flatten inputs into clear 1D vectors to prevent dimensional mismatch errors
-            numeric_flat = np.array([mh, mc, Th1, Tc1, c, h, Volume_Concentration, Size_of_Particle, Ultrasonication_time, Speed_of_Magnetic_Stirrer], dtype=float)
-            fluid_flat = np.ravel(fluid_encoded)
-
-            # 3. Concatenate horizontally and shape as 2D array row vector for the scaler
-            input_features = np.concatenate([numeric_flat, fluid_flat]).reshape(1, -1)
-
-            # 4. Scale inputs safely
-            input_scaled = scaler.transform(input_features)
-
-            if selected_model_name == "Compare All Models":
+            if selected_model_name == "Comparison of All Models":
                 st.markdown("### 📊 Model Comparison Across All Parameters")
                 
                 all_results = {}
                 for m_name, mod in models.items():
+                    # Force flatten the prediction array
                     pred = np.ravel(mod.predict(input_scaled))
                     
+                    # Pad with 0.0 if the model predicts fewer than 13 parameters
                     if len(pred) < len(outputs):
                         pred = np.pad(pred, (0, len(outputs) - len(pred)), 'constant')
                         
                     res_dict = dict(zip(outputs, pred))
                     
+                    # --- MINIMAL FIX: Force physical bounds on the final text numbers ---
                     res_dict["Th2"] = min(res_dict["Th2"], Th1 - 0.001)
                     res_dict["Tc2"] = max(Tc1 + 4.0, min(res_dict["Tc2"], Tc1 + 15.0))
                     
@@ -241,26 +230,27 @@ with col_right:
                 tab_graph, tab_table = st.tabs(["📊 Graphical View", "📋 Tabular View"])
                 
                 with tab_graph:
-                    # Layout grid generation for Plotly figures
+                    cols = st.columns(3)
                     for i, param in enumerate(outputs):
-                        param_vals = [all_results[m][param] for m in models.keys()]
-                        
-                        fig = go.Figure(data=[go.Bar(
-                            x=list(models.keys()), 
-                            y=param_vals,
-                            marker_color=['#00E5FF', '#1E3A5F', '#FF007F', '#00FF7F']
-                        )])
-                        
-                        fig.update_layout(
-                            title=dict(text=f"Parameter: {param}", font=dict(color="#00E5FF", size=14)),
-                            margin=dict(l=20, r=20, t=40, b=20),
-                            height=240,
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            xaxis=dict(showgrid=False, tickfont=dict(color="white", size=10)),
-                            yaxis=dict(showgrid=True, gridcolor='#1E3A5F', tickfont=dict(color="white"))
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                        with cols[i % 3]:
+                            param_vals = [all_results[m][param] for m in models.keys()]
+                            
+                            fig = go.Figure(data=[go.Bar(
+                                x=list(models.keys()), 
+                                y=param_vals,
+                                marker_color=['#00E5FF', '#1E3A5F', '#FF007F', '#00FF7F']
+                            )])
+                            
+                            fig.update_layout(
+                                title=dict(text=f"Parameter: {param}", font=dict(color="#00E5FF", size=14)),
+                                margin=dict(l=20, r=20, t=40, b=20),
+                                height=280,
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color="white", size=10)),
+                                yaxis=dict(showgrid=True, gridcolor='#1E3A5F', tickfont=dict(color="white"))
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
 
                 with tab_table:
                     df = pd.DataFrame(all_results)
@@ -285,18 +275,26 @@ with col_right:
                 Th2 = result.get("Th2", 0.0)
                 Tc2 = result.get("Tc2", 0.0)
                 
+                # --- MINIMAL FIX: Force physical bounds on the final text numbers ---
                 Tc2 = max(Tc1 + 4.0, min(Tc2, Tc1 + 15.0))
                 Th2 = min(Th2, Th1 - 0.001)
     
                 result["Tc2"] = Tc2
                 result["Th2"] = Th2
                 
+
+                Qh = mh * c * (Th1 - Th2)
+                Qc = mc * h * (Tc2 - Tc1)
+                Ch, Cc = mh * c, mc * h
+                Cmin, Cmax = min(Ch, Cc), max(Ch, Cc)
+                Cr = Cmin / Cmax if Cmax != 0 else 0
+
                 with st.container(border=True):
                     st.markdown(f"### 📈 Neural Predictions ({selected_model_name})")
                     
-                    res_cols = st.columns(3)
+                    res_cols = st.columns(4)
                     for i, (key, value) in enumerate(result.items()):
-                        with res_cols[i % 3]:
+                        with res_cols[i % 4]:
                             st.markdown(f"""
                             <div data-testid="metric-container">
                                 <div style="color: #8B9BB4; font-size: 14px; margin-bottom: 5px;">{key}</div>
@@ -308,53 +306,88 @@ with col_right:
                 
                 with c_deriv:
                     with st.container(border=True):
-                        st.markdown("### 🧮 Summary Stats")
-                        st.markdown(f"**Th2 Predicted (°C)** <span style='float:right; color:#00E5FF;'>{result.get('Th2', 0.0):.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Tc2 Predicted (°C)** <span style='float:right; color:#00E5FF;'>{result.get('Tc2', 0.0):.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Qh Predicted (kW)** <span style='float:right; color:#00E5FF;'>{result.get('Qh', 0.0):.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**U Predicted** <span style='float:right; color:#00E5FF;'>{result.get('U', 0.0):.4f}</span>", unsafe_allow_html=True)
-                        st.markdown(f"**Effectiveness** <span style='float:right; color:#00E5FF;'>{result.get('Effectiveness', 0.0):.4f}</span>", unsafe_allow_html=True)
+                        st.markdown("### 🧮 Derived Stats")
+                        st.markdown(f"**Qh (kW)** <span style='float:right; color:#00E5FF;'>{Qh:.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Qc (kW)** <span style='float:right; color:#00E5FF;'>{Qc:.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Cmin** <span style='float:right; color:#00E5FF;'>{Cmin:.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Cmax** <span style='float:right; color:#00E5FF;'>{Cmax:.4f}</span>", unsafe_allow_html=True)
+                        st.markdown(f"**Cr Ratio** <span style='float:right; color:#00E5FF;'>{Cr:.4f}</span>", unsafe_allow_html=True)
                         
                 with c_map:
                     with st.container(border=True):
-                        st.markdown("### 🌐 Spatial Thermal Distribution")
-                        grid_res = 30
-                        y = np.linspace(0, 1, grid_res)
+                        st.markdown("### 📚 Parameter Glossary")
+                        tab_in, tab_out = st.tabs(["Inputs", "Outputs & Derived"])
                         
-                        hot_profile = np.linspace(Th1, Th2, grid_res)
-                        cold_profile = np.linspace(Tc1, Tc2, grid_res)
+                        with tab_in:
+                            st.markdown("""
+                            <div style='font-size: 0.85rem; color: #8C9BAB;'>
+                            <b>mh / mc:</b> Mass flow rate (hot/cold fluid)<br>
+                            <b>Th1 / Tc1:</b> Inlet temperature (hot/cold)<br>
+                            <b>c / h:</b> Specific heat capacity (hot/cold)<br>
+                            <b>Volume_Concentration:</b> Vol. fraction of nanoparticles<br>
+                            <b>Size_of_Particle:</b> Nanoparticle size<br>
+                            <b>Ultrasonication_time:</b> Duration of ultrasonication<br>
+                            <b>Speed_of_Magnetic_Stirrer:</b> Stirrer rotation speed
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                        with tab_out:
+                            st.markdown("""
+                            <div style='font-size: 0.85rem; color: #8C9BAB; column-count: 2; column-gap: 20px;'>
+                            <b>Th2 / Tc2:</b> Outlet temp. (hot/cold)<br>
+                            <b>LMTD:</b> Log Mean Temp. Difference<br>
+                            <b>e:</b> Effectiveness<br>
+                            <b>U0:</b> Overall heat transfer coeff.<br>
+                            <b>V:</b> Fluid velocity<br>
+                            <b>Rec:</b> Reynolds number (cold)<br>
+                            <b>Prc:</b> Prandtl number (cold)<br>
+                            <b>NTU:</b> Number of Transfer Units<br>
+                            <b>Dec:</b> Equivalent diameter (cold)<br>
+                            <b>Nuc:</b> Nusselt number (cold)<br>
+                            <b>hc:</b> Convective heat transfer coeff.<br>
+                            <b>R:</b> Heat capacity ratio<br>
+                            </div>
+                            """, unsafe_allow_html=True)
+                # with c_map:
+                #     with st.container(border=True):
+                #         st.markdown("### 🌐 Spatial Thermal Distribution")
+                #         grid_res = 30
+                #         y = np.linspace(0, 1, grid_res)
                         
-                        Z = np.zeros((grid_res, grid_res))
-                        for i in range(grid_res):
-                            Z[i, :] = cold_profile * (1 - y[i]) + hot_profile * y[i]
+                #         hot_profile = np.linspace(Th1, Th2, grid_res)
+                #         cold_profile = np.linspace(Tc1, Tc2, grid_res)
                         
-                        fig = go.Figure(data=go.Contour(
-                            z=Z,
-                            colorscale='Inferno', 
-                            line_smoothing=0.85,
-                            contours=dict(coloring='heatmap'),
-                            showscale=False 
-                        ))
+                #         Z = np.zeros((grid_res, grid_res))
+                #         for i in range(grid_res):
+                #             Z[i, :] = cold_profile * (1 - y[i]) + hot_profile * y[i]
                         
-                        fig.update_layout(
-                            margin=dict(l=0, r=0, t=0, b=0),
-                            height=200,
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            xaxis=dict(visible=False),
-                            yaxis=dict(visible=False)
-                        )
-                        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                #         fig = go.Figure(data=go.Contour(
+                #             z=Z,
+                #             colorscale='Inferno', 
+                #             line_smoothing=0.85,
+                #             contours=dict(coloring='heatmap'),
+                #             showscale=False 
+                #         ))
+                        
+                #         fig.update_layout(
+                #             margin=dict(l=0, r=0, t=0, b=0),
+                #             height=200,
+                #             paper_bgcolor='rgba(0,0,0,0)',
+                #             plot_bgcolor='rgba(0,0,0,0)',
+                #             xaxis=dict(visible=False),
+                #             yaxis=dict(visible=False)
+                #         )
+                #         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     else:
         st.info("📡 SYSTEM READY: Input parameters and initialize to view thermal dynamics.")
         
         if scores:
-            if selected_model_name == "Compare All Models":
+            if selected_model_name == "Comparison of All Models":
                 st.info("💡 Select a specific neural model from the sidebar to view its individual performance metrics.")
             else:
                 with st.container(border=True):
-                    st.markdown(f"### Engine Validation Metrics: {selected_model_name}")
+                    st.markdown(f"### 📊 Model Details: {selected_model_name}")
                     
                     model_data = scores.get(selected_model_name, "N/A")
                     
@@ -371,5 +404,47 @@ with col_right:
                         r2_str = f"{model_data:.4f}" if isinstance(model_data, float) else "N/A"
                         mae_str = "N/A" 
                         rmse_str = "N/A" 
-
-                    
+# =========================
+    # Glossary Section
+    # =========================
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("📚 Parameter Glossary (Full Forms)", expanded=False):
+        c_gloss_1, c_gloss_2 = st.columns(2)
+        
+        with c_gloss_1:
+            st.markdown("""
+            **🔹 Inputs**
+            * **mh**: Mass flow rate of hot fluid
+            * **mc**: Mass flow rate of cold fluid
+            * **Th1**: Hot fluid inlet temperature
+            * **Tc1**: Cold fluid inlet temperature
+            * **c (Cp hot)**: Specific heat capacity of hot fluid
+            * **h (Cp cold)**: Specific heat capacity of cold fluid
+            * **Volume_Concentration**: Volume concentration of nanoparticles
+            * **Size_of_Particle**: Size of nanoparticles
+            * **Ultrasonication_time**: Time duration of ultrasonication
+            * **Speed_of_Magnetic_Stirrer**: Rotational speed of the magnetic stirrer
+            """)
+            
+        with c_gloss_2:
+            st.markdown("""
+            **🔸 Outputs & Derived Stats**
+            * **Th2**: Hot fluid outlet temperature
+            * **Tc2**: Cold fluid outlet temperature
+            * **LMTD**: Logarithmic Mean Temperature Difference
+            * **e**: Heat exchanger effectiveness
+            * **U0**: Overall heat transfer coefficient
+            * **V**: Fluid velocity
+            * **Rec**: Reynolds number (cold fluid)
+            * **Prc**: Prandtl number (cold fluid)
+            * **NTU**: Number of Transfer Units
+            * **Dec**: Equivalent diameter (cold side)
+            * **Nuc**: Nusselt number (cold fluid)
+            * **hc**: Convective heat transfer coefficient (cold side)
+            * **R**: Heat capacity ratio 
+            * **Qh**: Heat transfer rate (hot side)
+            * **Qc**: Heat transfer rate (cold side)
+            * **Cmin / Cmax**: Minimum / Maximum heat capacity rate
+            * **Cr Ratio**: Heat capacity rate ratio (Cmin / Cmax)
+            """)
+                
