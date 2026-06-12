@@ -2,6 +2,47 @@ from flask import Flask, request, jsonify  # type: ignore[import]
 from flask_cors import CORS  # type: ignore[import]  # Install this: pip install flask-cors
 import numpy as np  # type: ignore[import]
 import pickle
+import sys
+import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
+
+
+# Provide a compatible ConstrainedRegressor for unpickling
+class ConstrainedRegressor(BaseEstimator, RegressorMixin):
+    def __init__(self, base_model=None, scaler=None):
+        self.base_model = base_model
+        self.scaler = scaler
+
+    def fit(self, X, Y):
+        if hasattr(self.base_model, "fit"):
+            self.base_model.fit(X, Y)
+        return self
+
+    def predict(self, X):
+        preds = self.base_model.predict(X)
+        try:
+            X_unscaled = self.scaler.inverse_transform(X)
+            Th1 = X_unscaled[:, 3]
+            Tc1 = X_unscaled[:, 4]
+            preds = np.asarray(preds)
+            if preds.ndim == 2:
+                preds[:, 0] = np.minimum(preds[:, 0], Th1 - 0.001)
+                preds[:, 1] = np.clip(preds[:, 1], Tc1 + 4.0, Tc1 + 15.0)
+        except Exception:
+            pass
+        return preds
+
+# Ensure unpickling can find the class if pickles reference '__main__.ConstrainedRegressor'
+try:
+    sys.modules['__main__'].ConstrainedRegressor = ConstrainedRegressor
+except Exception:
+    try:
+        import types
+        m = types.ModuleType('__main__')
+        m.ConstrainedRegressor = ConstrainedRegressor
+        sys.modules['__main__'] = m
+    except Exception:
+        pass
 
 app = Flask(__name__)
 CORS(app)  # This enables CORS for all routes
